@@ -1,0 +1,10 @@
+{
+  "name": "hello-world-app",
+  "version": "1.0.0",
+  "description": "Simple Node.js hello world server",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js"
+  },
+  "dependencies": {}
+}
