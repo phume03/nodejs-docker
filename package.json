@@ -1,10 +1,20 @@
 {
-  "name": "hello-world-app",
-  "version": "1.0.0",
-  "description": "Simple Node.js hello world server",
-  "main": "src/index.js",
+  "name": "nodejs-docker-example",
+  "version": "1.0.1",
+  "description": "A minimal Node.js Typescript application.",
+  "main": "dist/index.js",
   "scripts": {
-    "start": "node src/index.js"
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "tsx watch src/index.ts"
   },
-  "dependencies": {}
+  "dependencies": {
+    "express": "^4.21.2"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/node": "^22.0.0",
+    "tsx": "^4.19.3",
+    "typescript": "^5.8.3"
+  }
 }

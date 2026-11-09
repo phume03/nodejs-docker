@@ -1,37 +1,64 @@
 # syntax=docker/dockerfile:1
 
-# Use dev variant for building
-FROM dhi.io/node:26-alpine-dev AS build-stage
+# Comments are provided throughout this file to help you get started.
+# If you need more help, visit the Dockerfile reference guide at
+# https://docs.docker.com/go/dockerfile-reference/
 
-WORKDIR /usr/src/app
-COPY package*.json yarn.lock ./
+# This Dockerfile uses Docker Hardened Images (DHI) for enhanced security.
+# For more information, see https://docs.docker.com/dhi/
 
-# Yarn v1 works out of the box
-RUN yarn install --frozen-lockfile
+# Builder stage: install all dependencies and compile TypeScript.
+FROM dhi.io/node:26-alpine-dev AS builder
 
-ENV NODE_ENV=production
-WORKDIR /usr/src/app
+WORKDIR /app
 
-# Copy package files
-COPY package*.json ./
+# Install dependencies as a separate step to take advantage of Docker's
+# caching. Leverage a cache mount to /root/.npm to speed up subsequent
+# builds. Leverage a bind mount to package.json to avoid having to copy
+# it into this layer.
+RUN --mount=type=cache,target=/root/.npm \
+  --mount=type=bind,source=package.json,target=package.json \
+  npm install
 
-# Install dependencies and ensure node_modules exists
-RUN npm i --omit=dev && mkdir -p node_modules
+#Once you create a package-lock.json by running npm install locally, switch to npm ci and bind both files:
+# RUN --mount=type=cache,target=/root/.npm \
+#     --mount=type=bind,source=package.json,target=package.json \
+#     --mount=type=bind,source=package-lock.json,target=package-lock.json \
+#     npm ci
 
-# Use runtime variant for final image
-FROM dhi.io/node:26-alpine-dev AS runtime-stage
-ENV NODE_ENV=production
-WORKDIR /usr/src/app
+# Copy the source code into the container and compile TypeScript.
+COPY . .
+RUN npm run build
 
-# Copy node_modules from build stage
-COPY --from=build-stage /usr/src/app/node_modules ./node_modules
+# Deps stage: install production dependencies only.
+FROM dhi.io/node:26-alpine-dev AS deps
 
-# Copy application code
-COPY src ./src
-COPY package*.json ./
+WORKDIR /app
+
+RUN --mount=type=cache,target=/root/.npm \
+    --mount=type=bind,source=package.json,target=package.json \
+    npm install --omit=dev
+
+# Once you create a package-lock.json by running npm install locally, switch to npm ci and bind both files:
+# RUN --mount=type=cache,target=/root/.npm \
+#     --mount=type=bind,source=package.json,target=package.json \
+#     --mount=type=bind,source=package-lock.json,target=package-lock.json \
+#     npm ci --omit=dev
+
+
+# Runner stage: minimal runtime image with compiled app and production deps.
+FROM dhi.io/node:26-alpine-dev AS runner
+
+ENV PATH=/app/node_modules/.bin:$PATH
+
+WORKDIR /app
+
+COPY --from=deps --chown=node:node /app/node_modules ./node_modules
+COPY --from=builder --chown=node:node /app/dist ./dist
 
 # Expose port (use non-privileged port)
 EXPOSE 3000
 
-# Start the application
-CMD ["node", "src/index.js"]
+# Run the application.
+CMD ["node", "dist/index.js"]
+
