@@ -69,3 +69,8 @@ EXPOSE 3000
 # Run the application.
 CMD ["node", "dist/index.js"]
 
+FROM dev AS test
+
+ENV CI=true
+
+CMD ["npm", "test"]

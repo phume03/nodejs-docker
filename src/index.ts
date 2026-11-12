@@ -20,7 +20,7 @@ function getPassword(): string {
   return process.env.POSTGRES_PASSWORD ?? "";
 }
 
-export const pool = new Pool({
+const pool = new Pool({
   host: process.env.POSTGRES_SERVER,
   port: 5432,
   database: process.env.POSTGRES_DB,
@@ -55,6 +55,7 @@ app.post("/heroes/", async (req: Request, res: Response) => {
     secret_name: string;
     age?: number;
   };
+
   const result = await pool.query(
     "INSERT INTO heroes (name, secret_name, age) VALUES ($1, $2, $3) RETURNING *",
     [name, secret_name, age],
@@ -68,7 +69,7 @@ app.get("/heroes/", async (_req: Request, res: Response) => {
 });
 
 // Guard with NODE_ENV instead of require.main for Vitest compatibility
-if (process.env.NODE_ENV !== "test") {
+if (require.main === module) {
   app.listen(port, () => {
     console.log(`Server listening on port ${port}`);
   });
