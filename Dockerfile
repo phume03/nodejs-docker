@@ -7,8 +7,9 @@
 # This Dockerfile uses Docker Hardened Images (DHI) for enhanced security.
 # For more information, see https://docs.docker.com/dhi/
 
-# Builder stage: install all dependencies and compile TypeScript.
-FROM dhi.io/node:26-alpine-dev AS builder
+# Development stage: install all dependencies, compile TypeScript, and
+# serve with hot-reload. Used directly in development via compose.yaml.
+FROM dhi.io/node:26-alpine-dev AS dev
 
 WORKDIR /app
 
@@ -29,6 +30,12 @@ RUN --mount=type=cache,target=/root/.npm \
 # Copy the source code into the container and compile TypeScript.
 COPY . .
 RUN npm run build
+
+# Expose the port that the application listens on.
+EXPOSE 3000
+
+# Run the application in development mode.
+CMD ["npm", "run", "dev"]
 
 # Deps stage: install production dependencies only.
 FROM dhi.io/node:26-alpine-dev AS deps
@@ -54,7 +61,7 @@ ENV PATH=/app/node_modules/.bin:$PATH
 WORKDIR /app
 
 COPY --from=deps --chown=node:node /app/node_modules ./node_modules
-COPY --from=builder --chown=node:node /app/dist ./dist
+COPY --from=dev --chown=node:node /app/dist ./dist
 
 # Expose port (use non-privileged port)
 EXPOSE 3000
