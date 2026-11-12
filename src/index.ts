@@ -7,7 +7,7 @@ import express, { type Request, type Response } from "express";
 import { Pool } from "pg";
 import { readFileSync } from "fs";
 
-const app = express();
+export const app = express();
 const port = parseInt(process.env.PORT ?? "3000", 10);
 
 app.use(express.json());
@@ -20,7 +20,7 @@ function getPassword(): string {
   return process.env.POSTGRES_PASSWORD ?? "";
 }
 
-const pool = new Pool({
+export const pool = new Pool({
   host: process.env.POSTGRES_SERVER,
   port: 5432,
   database: process.env.POSTGRES_DB,
@@ -28,19 +28,21 @@ const pool = new Pool({
   password: getPassword(),
 });
 
-pool
-  .query(
-    `CREATE TABLE IF NOT EXISTS heroes (
-      id SERIAL PRIMARY KEY,
-      name TEXT NOT NULL,
-      secret_name TEXT NOT NULL,
-      age INTEGER
-    )`,
-  )
-  .catch(console.error);
+if (process.env.POSTGRES_SERVER) {
+  pool
+    .query(
+      `CREATE TABLE IF NOT EXISTS heroes (
+        id SERIAL PRIMARY KEY,
+        name TEXT NOT NULL,
+        secret_name TEXT NOT NULL,
+        age INTEGER
+      )`,
+    )
+    .catch(console.error);
+}
 
 app.get("/", (_req: Request, res: Response) => {
-  res.json({ message: "Hello World!!!" });
+  res.json({ message: "Hello World" });
 });
 
 app.get("/health", (_req: Request, res: Response) => {
@@ -65,6 +67,9 @@ app.get("/heroes/", async (_req: Request, res: Response) => {
   res.json(result.rows);
 });
 
-app.listen(port, () => {
-  console.log(`Server listening on port ${port}`);
-});
+// Guard with NODE_ENV instead of require.main for Vitest compatibility
+if (process.env.NODE_ENV !== "test") {
+  app.listen(port, () => {
+    console.log(`Server listening on port ${port}`);
+  });
+}
