@@ -41,11 +41,11 @@ if (process.env.POSTGRES_SERVER) {
     .catch(console.error);
 }
 
-app.get("/", (_req: Request, res: Response) => {
+app.get("/", (req: Request, res: Response) => {
   res.json({ message: "Hello World" });
 });
 
-app.get("/health", (_req: Request, res: Response) => {
+app.get("/health", (req: Request, res: Response) => {
   res.json({ status: "ok" });
 });
 
@@ -63,14 +63,17 @@ app.post("/heroes/", async (req: Request, res: Response) => {
   res.json(result.rows[0]);
 });
 
-app.get("/heroes/", async (_req: Request, res: Response) => {
+app.get("/heroes/", async (req: Request, res: Response) => {
   const result = await pool.query("SELECT * FROM heroes");
   res.json(result.rows);
 });
 
-// Guard with NODE_ENV instead of require.main for Vitest compatibility
+// only start the server if this file is run directly, not when imported for testing
 if (require.main === module) {
   app.listen(port, () => {
     console.log(`Server listening on port ${port}`);
   });
+} else {
+  // Do not start the server
+  console.log("Likely testing...");
 }

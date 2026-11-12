@@ -5,7 +5,7 @@
 import { describe, it, expect } from "vitest";
 import request from "supertest";
 import http from "http";
-import { app } from "./index";
+import { app } from "./index.ts";
 
 describe("GET /", () => {
   it("returns a JSON greeting", async () => {
