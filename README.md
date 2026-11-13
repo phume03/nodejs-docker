@@ -1,6 +1,10 @@
 # NodeJs Docker #
 
 
+### Use of it vs test ###
+As noted in the [ViTest guides](https://vitest.dev/guide), you might notice that some tests are written using `it` and others using `test`. Do not get hung up on this as they are essentially the same. The keyword `it` is just a preferred alias because it appears to be more descriptive and seems to read naturally. 
+
+
 ## Resources ##
 + [ViTest](https://vitest.dev/guide/)
 + [ViTest with Node/Express](https://dev.to/abdddd/vitest-setup-with-serverless-framework-nodejs-expressjs-550c)
